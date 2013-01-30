@@ -90,3 +90,21 @@ func (enc *Encoder) Encode(e interface{}) (err error) {
 
 	return
 }
+
+func EncodeToString(e interface{}, secret string) (r string, err error) {
+	buf := bytes.NewBuffer(nil)
+	enc := NewEncoder(buf, secret)
+	err = enc.Encode(e)
+	if err != nil {
+		return
+	}
+	r = buf.String()
+	return
+}
+
+func DecodeString(val string, e interface{}, secret string) (err error) {
+	buf := bytes.NewBufferString(val)
+	enc := NewDecoder(buf, secret)
+	err = enc.Decode(e)
+	return
+}

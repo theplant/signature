@@ -41,6 +41,17 @@ func TestEncodeAndDecode(t *testing.T) {
 
 }
 
+func TestDecodeStringAndEncodeToString(t *testing.T) {
+	v1 := &Value{"Felix", 18}
+	var v2 Value
+	secret := "q3244214"
+	s, _ := EncodeToString(v1, secret)
+	DecodeString(s, &v2, secret)
+	if v1.Name != v2.Name {
+		t.Error(v1, v2)
+	}
+}
+
 // func TestGobBase64(t *testing.T) {
 // 	v1 := &Value{"Azuma", 25}
 
