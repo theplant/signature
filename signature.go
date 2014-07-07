@@ -6,8 +6,10 @@ import (
 	"encoding/base64"
 	"encoding/gob"
 	"errors"
+
 	"hash"
 	"io"
+	"reflect"
 )
 
 var (
@@ -46,6 +48,34 @@ func (dec *Decoder) Decode(e interface{}) (err error) {
 	err = gd.Decode(e)
 
 	if err != nil {
+		return
+	}
+
+	// Map is unordered, so the checksum will be different if the map elemements are in differnet order
+	// Use the byte by byte comparion algorithm
+	if reflect.Indirect(reflect.ValueOf(e)).Kind() == reflect.Map {
+		var map1 = make(map[int]bool)
+		var map2 = make(map[int]bool)
+
+		for i, b1 := range sig[:20] {
+			for j, b2 := range dec.sh1.Sum(nil) {
+				if b1 == b2 && !map1[i] && !map2[j] {
+					map1[i] = true
+					map2[j] = true
+				}
+			}
+		}
+		for _, v := range map1 {
+			if !v {
+				return InvalidSignature
+			}
+		}
+		for _, v := range map2 {
+			if !v {
+				return InvalidSignature
+			}
+		}
+
 		return
 	}
 
