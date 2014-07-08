@@ -2,6 +2,7 @@ package signature
 
 import (
 	"bytes"
+
 	"reflect"
 	// "encoding/base64"
 	// "encoding/gob"
@@ -12,6 +13,12 @@ import (
 type Value struct {
 	Name string
 	Age  int
+}
+
+type NestedValue struct {
+	GroupName string
+	People    []Value
+	Leader    Value
 }
 
 func TestEncodeAndDecode(t *testing.T) {
@@ -37,6 +44,41 @@ func TestEncodeAndDecode(t *testing.T) {
 	}
 
 	if v1.Name != v2.Name {
+		t.Error(v1, v2)
+	}
+
+}
+
+func TestEncodeAndDecodeForNestedStruct(t *testing.T) {
+	var secret = "234234"
+
+	var err error
+
+	buf := bytes.NewBuffer(nil)
+	enc := NewEncoder(buf, secret)
+	v1 := &NestedValue{
+		GroupName: "丐帮",
+		People: []Value{
+			Value{"马大元", 46},
+			Value{"白世镜", 54},
+		},
+		Leader: Value{"乔峰", 30},
+	}
+	err = enc.Encode(v1)
+
+	if err != nil {
+		t.Error(err)
+	}
+
+	var v2 *NestedValue
+	dec := NewDecoder(buf, secret)
+	err = dec.Decode(&v2)
+
+	if err != nil {
+		t.Error(err)
+	}
+
+	if !reflect.DeepEqual(v1, v2) {
 		t.Error(v1, v2)
 	}
 
