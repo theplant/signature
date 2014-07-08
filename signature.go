@@ -45,14 +45,15 @@ func (dec *Decoder) Decode(e interface{}) (err error) {
 	teeReader := io.TeeReader(dec.br, dec.sh1)
 	gd := gob.NewDecoder(teeReader)
 
-	if reflect.Indirect(reflect.ValueOf(e)).Kind() == reflect.Map {
+	if v := reflect.ValueOf(e); reflect.Indirect(v).Kind() == reflect.Map && !v.IsNil() {
 		si := &SerializableItem{}
 		err = gd.Decode(&si)
 		if err != nil {
 			return
 		}
-		toMap := si.ToMap()
-		reflect.ValueOf(e).Elem().Set(reflect.ValueOf(toMap))
+
+		toMap := si.ToMap(reflect.Indirect(v).Type())
+		v.Elem().Set(reflect.ValueOf(toMap))
 	} else {
 		err = gd.Decode(e)
 		if err != nil {

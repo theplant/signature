@@ -1,6 +1,7 @@
 package signature
 
 import (
+	"encoding/gob"
 	"reflect"
 	"sort"
 )
@@ -23,12 +24,11 @@ type SerializableItem struct {
 	Values []interface{}
 }
 
-func (this *SerializableItem) ToMap() interface{} {
+func (this *SerializableItem) ToMap(t reflect.Type) interface{} {
 	if len(this.Keys) <= 0 {
 		return nil
 	}
-	mapType := reflect.MapOf(reflect.ValueOf(this.Keys[0]).Type(), reflect.ValueOf(this.Values[0]).Type())
-	oMap := reflect.MakeMap(mapType)
+	oMap := reflect.MakeMap(t)
 	for i, k := range this.Keys {
 		oMap.SetMapIndex(reflect.ValueOf(k), reflect.ValueOf(this.Values[i]))
 	}
@@ -51,8 +51,18 @@ func InitWithMap(e interface{}) (r *SerializableItem) {
 		// encapsule the maps to the struct with certain order
 		if sort.IsSorted(ByString{ks}) {
 			for _, k := range ks {
-				kis = append(kis, k.Interface())
-				vis = append(vis, v.MapIndex(k).Interface())
+				ki := k.Interface()
+				vi := v.MapIndex(k).Interface()
+				kis = append(kis, ki)
+				vis = append(vis, vi)
+
+				// Register Gob so that it can encoding customized struct
+				kType := reflect.TypeOf(ki)
+				kDefaultValue := reflect.New(kType).Elem().Interface()
+				gob.Register(kDefaultValue)
+				vType := reflect.TypeOf(vi)
+				vDefaultValue := reflect.New(vType).Elem().Interface()
+				gob.Register(vDefaultValue)
 			}
 			r = &SerializableItem{kis, vis}
 		}

@@ -5,7 +5,7 @@ import (
 	"reflect"
 	// "encoding/base64"
 	// "encoding/gob"
-	// "fmt"
+
 	"testing"
 )
 
@@ -63,6 +63,32 @@ func TestDecodeStringToMap(t *testing.T) {
 
 	s1, _ := EncodeToString(&v, secret)
 	v1 := map[string]string{}
+	err := DecodeString(s1, &v1, secret)
+	if err != nil {
+		t.Error(err)
+	}
+
+	if !reflect.DeepEqual(v1, v) {
+		t.Error(v1, v)
+	}
+}
+
+func TestDecodeToMapWithCustumizeInterface(t *testing.T) {
+	type Pet struct {
+		Name   string
+		Age    int
+		Weight float32
+	}
+
+	v := map[string]interface{}{
+		"name": "Felix",
+		"age":  18,
+		"pet":  Pet{"peter", 2, 23.4},
+	}
+	secret := "q3244214"
+
+	s1, _ := EncodeToString(&v, secret)
+	v1 := map[string]interface{}{}
 	err := DecodeString(s1, &v1, secret)
 	if err != nil {
 		t.Error(err)
