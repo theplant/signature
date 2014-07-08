@@ -1,10 +1,8 @@
 package signature
 
 import (
-	"reflect"
-
 	"bytes"
-
+	"reflect"
 	// "encoding/base64"
 	// "encoding/gob"
 	// "fmt"
@@ -44,35 +42,35 @@ func TestEncodeAndDecode(t *testing.T) {
 
 }
 
-func TestEncodeMapToStringAndDecodeStringToMap(t *testing.T) {
-	v := map[string]string{"name": "Felix", "age": "18"}
-
+func TestEncodeMapToString(t *testing.T) {
+	v := map[string]string{"name": "Felix", "age": "18", "color": "red"}
 	secret := "q3244214"
 	s1, _ := EncodeToString(&v, secret)
 	s2, _ := EncodeToString(&v, secret)
+	for i := 0; i < 100; i++ {
+		if s1 != s2 {
+			t.Error(s1, s2)
+		}
 
-	// Make sure encoding same map to diffent strings
-	for s2 == s1 {
+		s1, _ = EncodeToString(&v, secret)
 		s2, _ = EncodeToString(&v, secret)
 	}
+}
 
+func TestDecodeStringToMap(t *testing.T) {
+	v := map[string]string{"name": "Felix", "age": "18"}
+	secret := "q3244214"
+
+	s1, _ := EncodeToString(&v, secret)
 	v1 := map[string]string{}
 	err := DecodeString(s1, &v1, secret)
 	if err != nil {
 		t.Error(err)
 	}
 
-	v2 := map[string]string{}
-	err = DecodeString(s2, &v2, secret)
-	if err != nil {
-		t.Error(err)
+	if !reflect.DeepEqual(v1, v) {
+		t.Error(v1, v)
 	}
-
-	// Deconding from the diffenret string, but the value still the same
-	if !reflect.DeepEqual(v1, v2) {
-		t.Error(v1, v2)
-	}
-
 }
 
 func TestDecodeStringAndEncodeToString(t *testing.T) {

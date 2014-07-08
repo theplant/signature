@@ -6,9 +6,9 @@ import (
 	"encoding/base64"
 	"encoding/gob"
 	"errors"
-
 	"hash"
 	"io"
+	"reflect"
 )
 
 var (
@@ -44,10 +44,20 @@ func (dec *Decoder) Decode(e interface{}) (err error) {
 
 	teeReader := io.TeeReader(dec.br, dec.sh1)
 	gd := gob.NewDecoder(teeReader)
-	err = gd.Decode(e)
 
-	if err != nil {
-		return
+	if reflect.Indirect(reflect.ValueOf(e)).Kind() == reflect.Map {
+		si := &SerializableItem{}
+		err = gd.Decode(&si)
+		if err != nil {
+			return
+		}
+		toMap := si.ToMap()
+		reflect.ValueOf(e).Elem().Set(reflect.ValueOf(toMap))
+	} else {
+		err = gd.Decode(e)
+		if err != nil {
+			return
+		}
 	}
 
 	if bytes.Compare(dec.sh1.Sum(nil), sig[:20]) != 0 {
@@ -73,6 +83,13 @@ func NewEncoder(w io.Writer, secret string) *Encoder {
 
 func (enc *Encoder) Encode(e interface{}) (err error) {
 	defer enc.bw.Close()
+
+	if reflect.Indirect(reflect.ValueOf(e)).Kind() == reflect.Map {
+		si := InitWithMap(e)
+		if si != nil {
+			e = si
+		}
+	}
 
 	io.WriteString(enc.sh1, enc.secret)
 	ge := gob.NewEncoder(enc.sh1)
