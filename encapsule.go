@@ -37,20 +37,21 @@ func (this *SerializableItem) ToMap(t reflect.Type) interface{} {
 
 func InitWithMap(e interface{}) (r *SerializableItem) {
 	v := reflect.Indirect(reflect.ValueOf(e))
-	length := len(v.MapKeys())
-	if length > 0 {
+	if v.Kind() != reflect.Map {
+		return
+	}
+
+	mapKeys := v.MapKeys()
+	if len(mapKeys) > 0 {
 		// sort the keys
-		ks := []reflect.Value{}
 		kis := []interface{}{}
 		vis := []interface{}{}
-		for _, k := range v.MapKeys() {
-			ks = append(ks, k)
-		}
-		sort.Sort(ByString{ks})
+
+		sort.Sort(ByString{mapKeys})
 
 		// encapsule the maps to the struct with certain order
-		if sort.IsSorted(ByString{ks}) {
-			for _, k := range ks {
+		if sort.IsSorted(ByString{mapKeys}) {
+			for _, k := range mapKeys {
 				ki := k.Interface()
 				vi := v.MapIndex(k).Interface()
 				kis = append(kis, ki)

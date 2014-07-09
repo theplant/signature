@@ -11,14 +11,21 @@ import (
 )
 
 type Value struct {
-	Name string
-	Age  int
+	Name   string
+	Age    int
+	Phones map[int]string
 }
 
 type NestedValue struct {
 	GroupName string
 	People    []Value
 	Leader    Value
+}
+
+var phones = map[int]string{
+	2: "12345",
+	1: "434242",
+	9: "689789",
 }
 
 func TestEncodeAndDecode(t *testing.T) {
@@ -28,7 +35,7 @@ func TestEncodeAndDecode(t *testing.T) {
 
 	buf := bytes.NewBuffer(nil)
 	enc := NewEncoder(buf, secret)
-	v1 := &Value{"Azuma", 25}
+	v1 := &Value{"Azuma", 25, phones}
 	err = enc.Encode(v1)
 
 	if err != nil {
@@ -59,10 +66,10 @@ func TestEncodeAndDecodeForNestedStruct(t *testing.T) {
 	v1 := &NestedValue{
 		GroupName: "丐帮",
 		People: []Value{
-			Value{"马大元", 46},
-			Value{"白世镜", 54},
+			Value{"马大元", 46, phones},
+			Value{"白世镜", 54, phones},
 		},
-		Leader: Value{"乔峰", 30},
+		Leader: Value{"乔峰", 30, phones},
 	}
 	err = enc.Encode(v1)
 
@@ -142,7 +149,7 @@ func TestDecodeToMapWithCustumizeInterface(t *testing.T) {
 }
 
 func TestDecodeStringAndEncodeToString(t *testing.T) {
-	v1 := &Value{"Felix", 18}
+	v1 := &Value{"Felix", 18, phones}
 	var v2 Value
 	secret := "q3244214"
 	s, _ := EncodeToString(v1, secret)
